@@ -317,6 +317,36 @@ class Client
     }
 
     /**
+     * Returns the internal IDs of a list of contacts specified by their external ID.
+     *
+     * @param string $fieldId
+     * @param array $fieldValues
+     * @throws Exception\ClientException
+     * @return array
+     */
+    public function checkContactsIds($fieldId, array $fieldValues)
+    {
+        $data = array(
+            'key_id'           => $fieldId,
+            'external_ids'     => $fieldValues,
+            'get_multiple_ids' => 1
+        );
+
+        $response = $this->send(HttpClient::POST, 'contact/checkids', $data);
+
+        $data = $response->getData();
+        if (isset($data['ids'])) {
+            $ids = array();
+            foreach ($data['ids'] as $email => $id) {
+                $ids[$email] = $id[0];
+            }
+            return $ids;
+        }
+
+        throw new ClientException('Missing "ids" in response');
+    }
+
+    /**
      * Exports the selected fields of all contacts with properties changed in the time range specified.
      *
      * @param array $data
@@ -893,7 +923,7 @@ class Client
      * @throws ClientException
      * @throws ServerException
      */
-    protected function send($method = 'GET', $uri, array $body = array())
+    public function send($method = 'GET', $uri, array $body = array())
     {
         $headers = array('Content-Type: application/json', 'X-WSSE: ' . $this->getAuthenticationSignature());
         $uri = $this->baseUrl . $uri;
@@ -1015,3 +1045,4 @@ class Client
     }
 
 }
+
